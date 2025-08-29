@@ -1,0 +1,12 @@
+version: "3.9"
+
+services:
+  tour-service:
+    build: .
+    container_name: tour-service-node
+    ports:
+      - "5002:5002"
+    env_file:
+      - .env
+    environment:
+      STAKEHOLDERS_SERVICE_URL: "http://stakeholders-service-go:8081"
