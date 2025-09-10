@@ -158,10 +158,16 @@ export const deleteKeyPoint = async (req, res) => {
         const tour = await Tour.findById(tourId);
         if (!tour) return res.status(404).json({ message: "Tour not found" });
 
-        const keyPoint = tour.keyPoints.id(keyPointId);
-        if (!keyPoint) return res.status(404).json({ message: "Key point not found" });
+        // Filter out the key point by _id
+        const originalLength = tour.keyPoints.length;
+        tour.keyPoints = tour.keyPoints.filter(
+            (kp) => kp._id.toString() !== keyPointId
+        );
 
-        keyPoint.remove();
+        if (tour.keyPoints.length === originalLength) {
+            return res.status(404).json({ message: "Key point not found" });
+        }
+
         const updatedTour = await tour.save();
 
         res.status(200).json({ tour: updatedTour });
@@ -170,3 +176,4 @@ export const deleteKeyPoint = async (req, res) => {
         res.status(400).json({ error: err.message });
     }
 };
+
