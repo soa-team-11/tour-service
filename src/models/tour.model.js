@@ -1,6 +1,38 @@
-import mongoose from "mongoose";
+import mongoose, { Schema } from "mongoose";
 
 import { tourReviewSchema } from "./tourReview.model.js";
+
+const keyPointSchema = new mongoose.Schema(
+    {
+        _id: {
+            type: Schema.Types.ObjectId,
+            auto: true
+        },
+        name: {
+            type: String,
+            required: [true, "Key point name is required."],
+        },
+
+        description: {
+            type: String,
+            required: [true, "Key point description is required."],
+        },
+
+        latitude: {
+            type: Number,
+            required: [true, "Latitude is required."],
+        },
+
+        longitude: {
+            type: Number,
+            required: [true, "Longitude is required."],
+        },
+
+        image: {
+            type: String
+        }
+    }
+);
 
 const tourSchema = new mongoose.Schema(
     {
@@ -32,11 +64,14 @@ const tourSchema = new mongoose.Schema(
         },
         reviews: [tourReviewSchema],
         tags: [String],
+        keyPoints: [keyPointSchema]
     },
     {
         timestamps: true,
     }
 );
+
+
 
 const Tour = mongoose.model("Tour", tourSchema);
 export default Tour;
