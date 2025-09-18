@@ -20,7 +20,7 @@ const uploadKeyPointImage = async (image) => {
 
 export const createTour = async (req, res) => {
     try {
-        const { author, title, description, difficulty, price, tags, keyPoints, durations } =
+        const { author, title, description, difficulty, price, tags, keyPoints, durations, length } =
             req.body;
 
         const userExists = await doesUserExist(author);
@@ -45,6 +45,7 @@ export const createTour = async (req, res) => {
             tags,
             keyPoints: processedKeyPoints,
             durations,
+            length
         });
 
         res.status(201).json({ tour });
@@ -83,20 +84,20 @@ export const createTourReview = async (req, res) => {
     }
 };
 
+// backend route
 export const getToursByAuthor = async (req, res) => {
     try {
-        const { author } = req.body;
-
+        const { author } = req.query;  // <-- changed from req.body
         const tours = await Tour.find({ author });
         if (!tours || tours.length === 0)
             return res.status(404).json({ message: "No tours found for this author." });
-
         res.status(200).json({ tours });
     } catch (error) {
         console.error(error);
         res.status(400).json({ error: error.message });
     }
 };
+
 
 export const addKeyPoint = async (req, res) => {
     try {
