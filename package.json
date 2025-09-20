@@ -20,6 +20,8 @@
   },
   "homepage": "https://github.com/soa-team-11/tour-service#readme",
   "dependencies": {
+    "@grpc/grpc-js": "^1.14.0",
+    "@grpc/proto-loader": "^0.8.0",
     "axios": "^1.11.0",
     "cloudinary": "^2.7.0",
     "dotenv": "^17.2.1",
