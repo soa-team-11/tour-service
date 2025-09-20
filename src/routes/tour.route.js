@@ -4,7 +4,6 @@ import {
     activateTour,
     addKeyPoint,
     archiveTour,
-    createTour,
     createTourReview,
     deleteKeyPoint,
     getPublishedTours,
@@ -15,7 +14,7 @@ import {
 
 const router = express.Router();
 
-router.post("/", createTour);
+// router.post("/", createTour);
 router.post("/review/:tour_id", createTourReview);
 router.get("/tourByAuthor", getToursByAuthor);
 router.patch("/add-key-point/:tourId", addKeyPoint);

@@ -18,42 +18,139 @@ const uploadKeyPointImage = async (image) => {
     }
 };
 
-export const createTour = async (req, res) => {
-    try {
-        const { author, title, description, difficulty, price, tags, keyPoints, durations, length } =
-            req.body;
+// export const createTour = async (req, res) => {
+//     try {
+//         const { author, title, description, difficulty, price, tags, keyPoints, durations, length } =
+//             req.body;
 
-        const userExists = await doesUserExist(author);
-        // if (!userExists) return res.status(404).json({ message: "User not found." });
+//         const userExists = await doesUserExist(author);
+//         // if (!userExists) return res.status(404).json({ message: "User not found." });
 
-        const processedKeyPoints = keyPoints?.length
-            ? await Promise.all(
-                keyPoints.map(async (kp) => ({
-                    ...kp,
-                    image: await uploadKeyPointImage(kp.image),
-                    _id: new mongoose.Types.ObjectId(),
-                }))
-            )
-            : [];
+//         const processedKeyPoints = keyPoints?.length
+//             ? await Promise.all(
+//                 keyPoints.map(async (kp) => ({
+//                     ...kp,
+//                     image: await uploadKeyPointImage(kp.image),
+//                     _id: new mongoose.Types.ObjectId(),
+//                 }))
+//             )
+//             : [];
 
-        const tour = await Tour.create({
-            author,
-            title,
-            description,
-            difficulty,
-            price,
-            tags,
-            keyPoints: processedKeyPoints,
-            durations,
-            length
-        });
+//         const tour = await Tour.create({
+//             author,
+//             title,
+//             description,
+//             difficulty,
+//             price,
+//             tags,
+//             keyPoints: processedKeyPoints,
+//             durations,
+//             length
+//         });
 
-        res.status(201).json({ tour });
-    } catch (error) {
-        console.error(error);
-        res.status(400).json({ error: error.message });
-    }
+//         res.status(201).json({ tour });
+//     } catch (error) {
+//         console.error(error);
+//         res.status(400).json({ error: error.message });
+//     }
+// };
+
+export const handlers = {
+    CreateTour: async (call, callback) => {
+        try {
+            const {
+                author,
+                title,
+                description,
+                difficulty,
+                price = 0,
+                tags = [],
+                keyPoints = [],
+                durations = [],
+                length = 0,
+            } = call.request;
+
+            const userExists = await doesUserExist(author);
+            if (!userExists) {
+                return callback({
+                    code: grpc.status.NOT_FOUND,
+                    message: "User not found",
+                });
+            }
+
+            // Validate and process keyPoints
+            const processedKeyPoints = await Promise.all(
+                keyPoints.map(async (kp) => {
+                    if (!kp.name || !kp.description || kp.latitude === undefined || kp.longitude === undefined) {
+                        throw new Error("Each key point must have name, description, latitude, and longitude.");
+                    }
+                    return {
+                        _id: new mongoose.Types.ObjectId(),
+                        name: kp.name,
+                        description: kp.description,
+                        latitude: Number(kp.latitude),
+                        longitude: Number(kp.longitude),
+                        image: kp.image ? await uploadKeyPointImage(kp.image) : null,
+                    };
+                })
+            );
+
+            // Validate and process durations
+            const processedDurations = durations.map(d => {
+                if (!d.transportType || d.minutes === undefined) {
+                    throw new Error("Each duration must have transportType and minutes.");
+                }
+                return {
+                    transportType: d.transportType,
+                    minutes: Number(d.minutes),
+                };
+            });
+
+            const tour = await Tour.create({
+                author,
+                title,
+                description,
+                difficulty,
+                price: Number(price),
+                tags,
+                keyPoints: processedKeyPoints,
+                durations: processedDurations,
+                length: Number(length),
+                status: "draft",
+            });
+
+            callback(null, {
+                message: "Tour created successfully",
+                tour: {
+                    id: tour._id.toString(),
+                    author: tour.author,
+                    title: tour.title,
+                    description: tour.description,
+                    difficulty: tour.difficulty,
+                    price: tour.price,
+                    tags: tour.tags,
+                    keyPoints: tour.keyPoints.map(kp => ({
+                        name: kp.name,
+                        description: kp.description,
+                        latitude: kp.latitude,
+                        longitude: kp.longitude,
+                        image: kp.image,
+                    })),
+                    durations: tour.durations,
+                    length: tour.length,
+                    createdAt: tour.createdAt.toISOString(),
+                },
+            });
+        } catch (err) {
+            console.error("gRPC CreateTour error:", err);
+            return callback({
+                code: grpc.status.INTERNAL,
+                message: err.message,
+            });
+        }
+    },
 };
+
 
 export const createTourReview = async (req, res) => {
     try {
