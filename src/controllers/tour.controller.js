@@ -245,7 +245,7 @@ export const activateTour = async (req, res) => {
         }
 
         tour.status = "published";
-        tour.archivedAt = null; 
+        tour.archivedAt = null;
         tour.publishedAt = new Date();
 
         await tour.save();
@@ -276,6 +276,22 @@ export const getPublishedTours = async (req, res) => {
         }));
 
         res.status(200).json({ tours: limitedTours });
+    } catch (error) {
+        console.error(error);
+        res.status(400).json({ error: error.message });
+    }
+};
+
+export const getTourById = async (req, res) => {
+    try {
+        const { tourId } = req.params;
+
+        const tour = await Tour.findById(tourId);
+        if (!tour) {
+            return res.status(404).json({ message: "Tour not found" });
+        }
+
+        res.status(200).json(tour);
     } catch (error) {
         console.error(error);
         res.status(400).json({ error: error.message });
