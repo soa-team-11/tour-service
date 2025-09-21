@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import tourRutes from "./routes/tour.route.js"
 import { connectDB } from "./config/db.js";
 import { startGrpcServer } from "./grpcServer.js";
+import tourExecutionRoutes from "./routes/tourExecution.route.js";
 
 dotenv.config();
 
@@ -11,6 +12,7 @@ connectDB();
 
 app.use(express.json({ limit: "50mb" }));
 app.use("/api/tour", tourRutes);
+app.use("/api/tour-execution", tourExecutionRoutes);
 
 app.listen(process.env.PORT, () => console.log(`Server is running on PORT: ${process.env.PORT}`));
 
