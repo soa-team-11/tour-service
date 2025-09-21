@@ -26,6 +26,6 @@ router.post("/:tourId/archive", archiveTour);
 router.post("/:tourId/activate", activateTour);
 router.get("/published", getPublishedTours);
 router.get("/:tourId", getTourById);
-
+router.post("/activate-tour", () => {});
 
 export default router;

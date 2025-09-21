@@ -15,7 +15,7 @@ const durationSchema = new mongoose.Schema({
     }
 });
 
-const keyPointSchema = new mongoose.Schema(
+export const keyPointSchema = new mongoose.Schema(
     {
         _id: {
             type: Schema.Types.ObjectId,
@@ -47,7 +47,7 @@ const keyPointSchema = new mongoose.Schema(
     }
 );
 
-const tourSchema = new mongoose.Schema(
+export const tourSchema = new mongoose.Schema(
     {
         author: {
             type: String,
