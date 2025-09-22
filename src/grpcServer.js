@@ -102,7 +102,12 @@ export function startGrpcServer() {
     },
   };
 
-  const server = new grpc.Server();
+  const server = new grpc.Server(
+    {
+        'grpc.max_send_message_length': 50 * 1024 * 1024, // 50 MB
+        'grpc.max_receive_message_length': 50 * 1024 * 1024, // 50 MB
+    }
+  );
   server.addService(tourPackage.TourService.service, handlers);
 
   const GRPC_PORT = process.env.GRPC_PORT || 50052;
