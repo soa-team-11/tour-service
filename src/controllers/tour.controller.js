@@ -81,8 +81,15 @@ export const handlers = {
             // Validate and process keyPoints
             const processedKeyPoints = await Promise.all(
                 keyPoints.map(async (kp) => {
-                    if (!kp.name || !kp.description || kp.latitude === undefined || kp.longitude === undefined) {
-                        throw new Error("Each key point must have name, description, latitude, and longitude.");
+                    if (
+                        !kp.name ||
+                        !kp.description ||
+                        kp.latitude === undefined ||
+                        kp.longitude === undefined
+                    ) {
+                        throw new Error(
+                            "Each key point must have name, description, latitude, and longitude."
+                        );
                     }
                     return {
                         _id: new mongoose.Types.ObjectId(),
@@ -90,15 +97,19 @@ export const handlers = {
                         description: kp.description,
                         latitude: Number(kp.latitude),
                         longitude: Number(kp.longitude),
-                        image: kp.image ? await uploadKeyPointImage(kp.image) : null,
+                        image: kp.image
+                            ? await uploadKeyPointImage(kp.image)
+                            : null,
                     };
                 })
             );
 
             // Validate and process durations
-            const processedDurations = durations.map(d => {
+            const processedDurations = durations.map((d) => {
                 if (!d.transportType || d.minutes === undefined) {
-                    throw new Error("Each duration must have transportType and minutes.");
+                    throw new Error(
+                        "Each duration must have transportType and minutes."
+                    );
                 }
                 return {
                     transportType: d.transportType,
@@ -129,7 +140,7 @@ export const handlers = {
                     difficulty: tour.difficulty,
                     price: tour.price,
                     tags: tour.tags,
-                    keyPoints: tour.keyPoints.map(kp => ({
+                    keyPoints: tour.keyPoints.map((kp) => ({
                         name: kp.name,
                         description: kp.description,
                         latitude: kp.latitude,
@@ -151,6 +162,19 @@ export const handlers = {
     },
 };
 
+export const uploadReviewImage = async (image) => {
+    if (!image) return null;
+
+    try {
+        const uploadResponse = await cloudinary.uploader.upload(image, {
+            folder: "tours/reviews",
+        });
+        return uploadResponse.secure_url;
+    } catch (err) {
+        console.error("Cloudinary upload failed:", err);
+        throw new Error("Failed to upload review image");
+    }
+};
 
 export const createTourReview = async (req, res) => {
     try {
@@ -159,14 +183,18 @@ export const createTourReview = async (req, res) => {
 
         const tour = await Tour.findById(tourId);
         if (!tour)
-            return res.status(404).json({ error: `Tour with id '${tourId}' not found.` });
+            return res
+                .status(404)
+                .json({ error: `Tour with id '${tourId}' not found.` });
+
+        const imageUrl = await uploadReviewImage(images);
 
         tour.reviews.push({
             user,
             rating,
             comment,
             dateVisited: Date.now(), // Replace with actual visitation date if needed
-            images,
+            images: [imageUrl],
         });
 
         await tour.save({ timestamps: false });
@@ -184,17 +212,18 @@ export const createTourReview = async (req, res) => {
 // backend route
 export const getToursByAuthor = async (req, res) => {
     try {
-        const { author } = req.query;  // <-- changed from req.body
+        const { author } = req.query; // <-- changed from req.body
         const tours = await Tour.find({ author });
         if (!tours || tours.length === 0)
-            return res.status(404).json({ message: "No tours found for this author." });
+            return res
+                .status(404)
+                .json({ message: "No tours found for this author." });
         res.status(200).json({ tours });
     } catch (error) {
         console.error(error);
         res.status(400).json({ error: error.message });
     }
 };
-
 
 export const addKeyPoint = async (req, res) => {
     try {
@@ -234,7 +263,8 @@ export const updateKeyPoint = async (req, res) => {
         if (!tour) return res.status(404).json({ message: "Tour not found" });
 
         const keyPoint = tour.keyPoints.id(keyPointId);
-        if (!keyPoint) return res.status(404).json({ message: "Key point not found" });
+        if (!keyPoint)
+            return res.status(404).json({ message: "Key point not found" });
 
         if (updates.image) {
             updates.image = await uploadKeyPointImage(updates.image);
@@ -283,16 +313,29 @@ export const publishTour = async (req, res) => {
         const tour = await Tour.findById(tourId);
         if (!tour) return res.status(404).json({ message: "Tour not found" });
 
-        if (!tour.title || !tour.description || !tour.difficulty || !tour.tags?.length) {
-            return res.status(400).json({ message: "Tour must have title, description, difficulty, and tags." });
+        if (
+            !tour.title ||
+            !tour.description ||
+            !tour.difficulty ||
+            !tour.tags?.length
+        ) {
+            return res.status(400).json({
+                message:
+                    "Tour must have title, description, difficulty, and tags.",
+            });
         }
 
         if (!tour.keyPoints || tour.keyPoints.length < 2) {
-            return res.status(400).json({ message: "Tour must have at least 2 key points." });
+            return res
+                .status(400)
+                .json({ message: "Tour must have at least 2 key points." });
         }
 
         if (!tour.durations || tour.durations.length === 0) {
-            return res.status(400).json({ message: "Tour must have at least one duration for a transport type." });
+            return res.status(400).json({
+                message:
+                    "Tour must have at least one duration for a transport type.",
+            });
         }
 
         tour.status = "published";
@@ -315,7 +358,9 @@ export const archiveTour = async (req, res) => {
         if (!tour) return res.status(404).json({ message: "Tour not found" });
 
         if (tour.status !== "published") {
-            return res.status(400).json({ message: "Only published tours can be archived." });
+            return res
+                .status(400)
+                .json({ message: "Only published tours can be archived." });
         }
 
         tour.status = "archived";
@@ -338,7 +383,9 @@ export const activateTour = async (req, res) => {
         if (!tour) return res.status(404).json({ message: "Tour not found" });
 
         if (tour.status !== "archived") {
-            return res.status(400).json({ message: "Only archived tours can be reactivated." });
+            return res
+                .status(400)
+                .json({ message: "Only archived tours can be reactivated." });
         }
 
         tour.status = "published";
@@ -347,7 +394,10 @@ export const activateTour = async (req, res) => {
 
         await tour.save();
 
-        res.status(200).json({ message: "Tour reactivated successfully.", tour });
+        res.status(200).json({
+            message: "Tour reactivated successfully.",
+            tour,
+        });
     } catch (error) {
         console.error(error);
         res.status(400).json({ error: error.message });
@@ -359,17 +409,19 @@ export const getPublishedTours = async (req, res) => {
         const tours = await Tour.find({ status: "published" });
 
         if (!tours || tours.length === 0) {
-            return res.status(404).json({ message: "No published tours found." });
+            return res
+                .status(404)
+                .json({ message: "No published tours found." });
         }
 
-        const limitedTours = tours.map(tour => ({
+        const limitedTours = tours.map((tour) => ({
             _id: tour._id,
             title: tour.title,
             description: tour.description,
             difficulty: tour.difficulty,
             tags: tour.tags,
             price: tour.price,
-            keyPoints: tour.keyPoints.length > 0 ? [tour.keyPoints[0]] : [] // samo prva kt
+            keyPoints: tour.keyPoints.length > 0 ? [tour.keyPoints[0]] : [], // samo prva kt
         }));
 
         res.status(200).json({ tours: limitedTours });
@@ -394,4 +446,3 @@ export const getTourById = async (req, res) => {
         res.status(400).json({ error: error.message });
     }
 };
-
