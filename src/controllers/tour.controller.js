@@ -188,8 +188,6 @@ export const createTourReview = async (req, res) => {
                 .json({ error: `Tour with id '${tourId}' not found.` });
 
         const imageUrl = await uploadReviewImage(images);
-        console.log(images);
-        console.log(imageUrl);
 
         tour.reviews.push({
             user,
